@@ -2,122 +2,61 @@ package main
 
 import (
 	"fmt"
+	"lmnl/bestia/lights"
+	"lmnl/bestia/sensors"
+	"os"
 	"periph.io/x/conn/v3/gpio"
 	"periph.io/x/conn/v3/gpio/gpioreg"
-	"periph.io/x/conn/v3/i2c"
+	// "periph.io/x/conn/v3/i2c"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/host/v3"
 	"time"
 )
 
 const (
-	TRIG_PORT = "14"
-	ECHO_PORT = "15"
+	TRIG_PORT = "23"
+	ECHO_PORT = "24"
 	LEFT_ADDR = 0x20
-	RIGH_ADDR = 0x21
+	RIGH_ADDR = 0x23
 	IODIR     = 0x00
 	GPIO      = 0x09
+	ADDR      = 0x02
 )
 
-func getDistance(trig, echo gpio.PinIO) float64 {
-	// Ensure TRIG is LOW
-	trig.Out(gpio.Low)
-	time.Sleep(100 * time.Millisecond)
-
-	// Send 10us pulse to TRIG
-	trig.Out(gpio.High)
-	time.Sleep(10 * time.Microsecond)
-	trig.Out(gpio.Low)
-
-	// Wait for ECHO to go HIGH
-	start := time.Now()
-	for echo.Read() == gpio.Low {
-		if time.Since(start) > time.Second {
-			return -1 // timeout
-		}
-	}
-	pulseStart := time.Now()
-
-	// Wait for ECHO to go LOW
-	for echo.Read() == gpio.High {
-		if time.Since(pulseStart) > time.Second {
-			return -1 // timeout
-		}
-	}
-	pulseEnd := time.Now()
-
-	pulseDuration := pulseEnd.Sub(pulseStart).Seconds()
-	distance := pulseDuration * 17150 // in cm
-	return distance
-}
+// L 0x40 0x20 0x10 0x08 0x04 0x02
+// R 0x02 0x04 0x08 0x10 0x20 0x40
 
 func main() {
 	// Initialize periph.io
+	L_MAP := map[int]int{1: 0x40, 2: 0x20, 3: 0x10, 4: 0x08, 5: 0x04, 6: 0x02}
+	R_MAP := map[int]int{1: 0x02, 2: 0x04, 3: 0x08, 4: 0x10, 5: 0x20, 6: 0x40}
 
 	if _, err := host.Init(); err != nil {
-		fmt.Println("Failed to initialize periph:", err)
+		fmt.Printf("Failed to initialize periph: %v \n", err)
+		os.Exit(1)
 		return
 	}
-
 	bus, err := i2creg.Open("")
-
 	if err != nil {
-		fmt.Println("failed to open I2C bus: %v", err)
+		fmt.Printf("failed to open I2C bus: %v \n", err)
+		os.Exit(1)
 	}
+	defer bus.Close()
 
-	dev := i2c.Dev{Addr: LEFT_ADDR, Bus: bus}
-	dev2 := i2c.Dev{Addr: RIGH_ADDR, Bus: bus}
-	//var _ conn.Conn = &dev
+	left := lights.NewLights("left side", LEFT_ADDR, L_MAP, bus)
+	right := lights.NewLights("right side", RIGH_ADDR, R_MAP, bus)
+	matrix := lights.NewLigthsMatrix(left, right)
+	matrix.RowToggle(1)
+	time.Sleep(1 * time.Second)
+	matrix.RowToggle(1)
+	trig := gpioreg.ByName(TRIG_PORT) // GPIO23
+	echo := gpioreg.ByName(ECHO_PORT) // GPIO24
 
-	_, err = dev.Write([]byte{IODIR, 0x00})
-	_, err = dev2.Write([]byte{IODIR, 0x00})
-
-	if err != nil {
-		fmt.Println("failed to set IODIR: %v", err)
-	}
-
-	// Helper function to write to GPIO
-	setLEDs := func(val byte) {
-		_, err := dev.Write([]byte{GPIO, val})
-		if err != nil {
-			fmt.Println("failed to write GPIO: %v", err)
-		}
-		_, err = dev2.Write([]byte{GPIO, val})
-		if err != nil {
-			fmt.Println("failed to write GPIO: %v", err)
-		}
-
-	}
-
-	fmt.Println("Turning all LEDs ON")
-	setLEDs(0xFF) // "11111111" "10000000" -> hex
-	time.Sleep(2 * time.Second)
-
-	fmt.Println("Turning all LEDs OFF")
-	setLEDs(0x00)
-	time.Sleep(2 * time.Second)
-
-	fmt.Println("Turning all LEDs OFF")
-	setLEDs(0x80)
-	time.Sleep(2 * time.Second)
-
-	fmt.Println("Alternating LEDs")
-	setLEDs(0xAA)
-	time.Sleep(2 * time.Second)
-
-	setLEDs(0x55)
-	time.Sleep(2 * time.Second)
-	fmt.Println("Turning all LEDs OFF")
-	setLEDs(0x00)
-	time.Sleep(2 * time.Second)
-
-	fmt.Println("Done")
-
-	trig := gpioreg.ByName(TRIG_PORT) // GPIO14
-	echo := gpioreg.ByName(ECHO_PORT) // GPIO15
+	//testMode := gpioreg.ByName("17")
 
 	if trig == nil || echo == nil {
 		fmt.Println("GPIO pins not found")
+		os.Exit(1)
 		return
 	}
 
@@ -129,19 +68,19 @@ func main() {
 	// Goroutine to read distances periodically
 	go func() {
 		for {
-			dist := getDistance(trig, echo)
+			dist := sensors.GetDistance(trig, echo)
 			distCh <- dist
-			time.Sleep(1 * time.Second)
+			time.Sleep(200 * time.Millisecond)
 		}
 	}()
 
 	// Main goroutine: consume distance and do something
 	for dist := range distCh {
 		if dist >= 0 {
-			fmt.Printf("Distance: %.2f cm\n", dist)
+			fmt.Printf("distance is %.2f cm\n", dist)
+
 		} else {
 			fmt.Println("Timeout reading distance")
 		}
-		// You can add more logic here, e.g. trigger alerts, update UI, etc.
 	}
 }
