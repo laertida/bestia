@@ -7,10 +7,8 @@ import (
 	"os"
 	"periph.io/x/conn/v3/gpio"
 	"periph.io/x/conn/v3/gpio/gpioreg"
-	// "periph.io/x/conn/v3/i2c"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/host/v3"
-	"time"
 )
 
 const (
@@ -46,9 +44,6 @@ func main() {
 	left := lights.NewLights("left side", LEFT_ADDR, L_MAP, bus)
 	right := lights.NewLights("right side", RIGH_ADDR, R_MAP, bus)
 	matrix := lights.NewLigthsMatrix(left, right)
-	matrix.RowToggle(1)
-	time.Sleep(1 * time.Second)
-	matrix.RowToggle(1)
 	trig := gpioreg.ByName(TRIG_PORT) // GPIO23
 	echo := gpioreg.ByName(ECHO_PORT) // GPIO24
 
@@ -70,17 +65,19 @@ func main() {
 		for {
 			dist := sensors.GetDistance(trig, echo)
 			distCh <- dist
-			time.Sleep(200 * time.Millisecond)
 		}
 	}()
 
 	// Main goroutine: consume distance and do something
-	for dist := range distCh {
-		if dist >= 0 {
-			fmt.Printf("distance is %.2f cm\n", dist)
-
-		} else {
-			fmt.Println("Timeout reading distance")
+	go func() {
+		for dist := range distCh {
+			if dist > 0 && dist < 100 {
+				matrix.AllOn()
+			} else {
+				matrix.AllOff()
+			}
 		}
-	}
+	}()
+
+	select {}
 }

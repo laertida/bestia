@@ -55,6 +55,16 @@ func (lights *Lights) Toggle(number int) {
 
 }
 
+func (lights *Lights) AllOn() {
+	lights.lights = 0xFF
+	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+}
+
+func (lights *Lights) AllOff() {
+	lights.lights = 0x00
+	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+}
+
 func (lights *Lights) Flash(number int, during time.Duration) {
 	lights.On(number)
 	time.Sleep(during)
@@ -93,8 +103,12 @@ func (matrix *LightsMatrix) RowToggle(number int) {
 	matrix.right.Toggle(number)
 }
 
-func (matrix *LightsMatrix) TestMode() {
-	for i := range 6 {
-		matrix.RowToggle(i)
-	}
+func (matrix *LightsMatrix) AllOn() {
+	matrix.left.AllOn()
+	matrix.right.AllOn()
+}
+
+func (matrix *LightsMatrix) AllOff() {
+	matrix.left.AllOff()
+	matrix.right.AllOff()
 }
