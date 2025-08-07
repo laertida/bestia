@@ -1,0 +1,10 @@
+[Unit]
+Description=WiFi Auto Connect from Credentials File
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-connect.py
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

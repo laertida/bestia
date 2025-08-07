@@ -1,0 +1,13 @@
+[Unit]
+Description=Bestia Heart Beats
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/bestia
+Restart=always
+RestartSec=30
+User=laertida
+Group=laertida
+
+[Install]
+WantedBy=multi-user.target
