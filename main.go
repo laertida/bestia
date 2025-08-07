@@ -47,7 +47,11 @@ func main() {
 	trig := gpioreg.ByName(TRIG_PORT) // GPIO23
 	echo := gpioreg.ByName(ECHO_PORT) // GPIO24
 
-	//testMode := gpioreg.ByName("17")
+	testMode := gpioreg.ByName("17")
+
+	if testMode.Read() == gpio.Low {
+		os.Exit(0)
+	}
 
 	if trig == nil || echo == nil {
 		fmt.Println("GPIO pins not found")
