@@ -2,6 +2,7 @@ package lights
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"periph.io/x/conn/v3/i2c"
 	"time"
@@ -19,6 +20,7 @@ type Lights struct {
 	lights byte
 	name   string
 	ports  map[int]int
+	on     int
 }
 
 func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus) Lights {
@@ -33,36 +35,59 @@ func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus) Lights 
 		os.Exit(1)
 	}
 
-	return Lights{addr: addr, i2c: i2c, lights: byte(0x00), name: name, ports: ports}
+	return Lights{addr: addr, i2c: i2c, lights: byte(0x00), name: name, ports: ports, on: 1}
+}
+
+func (lights *Lights) Write() {
+	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
 }
 
 func (lights *Lights) On(number int) {
 	port := lights.ports[number]
 	lights.lights = lights.lights | byte(port)
-	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+	lights.Write()
+}
+
+func (lights *Lights) RandomOn() {
+	rand := rand.Intn(len(lights.ports) + 1)
+	if rand == 0 {
+		rand = 1
+	}
+	port := lights.ports[rand]
+	lights.lights = byte(port)
+	lights.Write()
 }
 
 func (lights *Lights) Off(number int) {
 	port := lights.ports[number]
 	lights.lights = lights.lights &^ byte(port)
-	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+	lights.Write()
+}
+
+func (lights *Lights) Step() {
+	if lights.on == len(lights.ports) {
+		lights.on = 1
+	} else {
+		lights.on += 1
+	}
+	lights.lights = byte(lights.ports[lights.on])
+	lights.Write()
 }
 
 func (lights *Lights) Toggle(number int) {
 	port := lights.ports[number]
 	lights.lights = lights.lights ^ byte(port)
-	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
-
+	lights.Write()
 }
 
 func (lights *Lights) AllOn() {
 	lights.lights = 0xFF
-	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+	lights.Write()
 }
 
 func (lights *Lights) AllOff() {
 	lights.lights = 0x00
-	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
+	lights.Write()
 }
 
 func (lights *Lights) Flash(number int, during time.Duration) {
@@ -70,45 +95,4 @@ func (lights *Lights) Flash(number int, during time.Duration) {
 	time.Sleep(during)
 	lights.Off(number)
 	time.Sleep(during)
-}
-
-type LightsMatrix struct {
-	left  Lights
-	right Lights
-}
-
-func NewLigthsMatrix(left Lights, right Lights) LightsMatrix {
-	return LightsMatrix{left: left, right: right}
-}
-
-func (matrix *LightsMatrix) RowOn(number int) {
-	matrix.left.On(1)
-	matrix.right.On(1)
-}
-
-func (matrix *LightsMatrix) RowOff(number int) {
-	matrix.left.Off(1)
-	matrix.right.Off(1)
-}
-
-func (matrix *LightsMatrix) RowFlash(number int, during time.Duration) {
-	matrix.RowOn(1)
-	time.Sleep(during)
-	matrix.RowOff(1)
-	time.Sleep(during)
-}
-
-func (matrix *LightsMatrix) RowToggle(number int) {
-	matrix.left.Toggle(number)
-	matrix.right.Toggle(number)
-}
-
-func (matrix *LightsMatrix) AllOn() {
-	matrix.left.AllOn()
-	matrix.right.AllOn()
-}
-
-func (matrix *LightsMatrix) AllOff() {
-	matrix.left.AllOff()
-	matrix.right.AllOff()
 }
