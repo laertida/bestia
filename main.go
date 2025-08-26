@@ -83,8 +83,10 @@ func main() {
 				time.Sleep(step)
 			}
 			var interval time.Duration
-			if dist > 100 {
-				interval = 1 * time.Second
+			interval = 1 * time.Second
+			if dist > 400 {
+				matrix.AllOff()
+			} else if dist < 400 && dist > 100 {
 				matrix.RowStep()
 			} else {
 				interval = time.Duration(100 * time.Millisecond)
@@ -100,6 +102,7 @@ func main() {
 				newDist, ok := newDistVal.(float64)
 
 				if ok && (dist > 100 && newDist < 100) {
+
 					break
 				}
 			}
