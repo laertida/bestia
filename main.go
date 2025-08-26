@@ -26,7 +26,7 @@ func main() {
 
 	var timeLow = flag.Int("timeLow", 60, "time in milliseconds where trigger is low.")
 	var timeUp = flag.Int("timeUp", 10, "time in milliseconds where trigger is low.")
-	var timeOut = flag.Int("timeout", 1, "time in seconds to consider timeout for the ultrasonic sensor.")
+	var timeOut = flag.Int("timeout", 1000, "time in milliseconds to consider timeout for the ultrasonic sensor.")
 	var lightsOn = flag.Bool("ligths", false, "This flags allows to configure if lights will be on or off.")
 	var log = flag.Bool("log", true, "This flag allows to enable, disable log.")
 
