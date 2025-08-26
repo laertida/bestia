@@ -78,18 +78,18 @@ func main() {
 			}
 			var interval time.Duration
 			interval = 1 * time.Second
-			if *log {
+			if *log == true {
 				fmt.Printf("dist: %.2f\n", dist)
 			}
 			if dist > 400 {
 				matrix.AllOff()
 			} else if dist < 400 && dist > 100 {
-				if *lightsOn {
+				if *lightsOn == true {
 					matrix.RowStep()
 				}
 			} else {
 				interval = time.Duration(100 * time.Millisecond)
-				if *lightsOn {
+				if *lightsOn == true {
 					matrix.RowRandom()
 				}
 			}
