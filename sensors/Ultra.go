@@ -28,7 +28,7 @@ func NewUltra(trigPort, echoPort string, low, up, tout int) Ultra {
 
 	timeLow := time.Duration(low) * time.Millisecond
 	timeUp := time.Duration(up) * time.Millisecond
-	timeout := time.Duration(tout) * time.Second
+	timeout := time.Duration(tout) * time.Millisecond
 
 	return Ultra{trig: trig, echo: echo, timeLow: timeLow, timeUp: timeUp, timeout: timeout}
 }
