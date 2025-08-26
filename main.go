@@ -81,7 +81,7 @@ func main() {
 			if *log == true {
 				fmt.Printf("dist: %.2f\n", dist)
 			}
-			if dist > 400 {
+			if dist > 400 || dist == 0 {
 				matrix.AllOff()
 			} else if dist < 400 && dist > 100 {
 				if *lightsOn == true {
