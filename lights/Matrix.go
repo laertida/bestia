@@ -50,16 +50,6 @@ func (matrix *Matrix) Steps() {
 	matrix.right.Step()
 }
 
-func (matrix *Matrix) AllFlash(during time.Duration) {
-	for i := range len(matrix.left.ports) {
-		matrix.RowOn(i)
-	}
-	time.Sleep(during)
-	for i := range len(matrix.left.ports) {
-		matrix.RowOff(i)
-	}
-}
-
 func (matrix *Matrix) RowStep() {
 	matrix.left.Step()
 	matrix.right.Step()
