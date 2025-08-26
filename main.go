@@ -28,6 +28,7 @@ func main() {
 	var timeUp = flag.Int("timeUp", 10, "time in milliseconds where trigger is low.")
 	var timeOut = flag.Int("timeout", 1, "time in seconds to consider timeout for the ultrasonic sensor.")
 	var lightsOn = flag.Bool("ligths", false, "This flags allows to configure if lights will be on or off.")
+	var log = flag.Bool("log", true, "This flag allows to enable, disable log.")
 
 	// L 0x40 0x20 0x10 0x08 0x04 0x02
 	// R 0x02 0x04 0x08 0x10 0x20 0x40
@@ -77,6 +78,9 @@ func main() {
 			}
 			var interval time.Duration
 			interval = 1 * time.Second
+			if *log {
+				fmt.Printf("dist: %.2f\n", dist)
+			}
 			if dist > 400 {
 				matrix.AllOff()
 			} else if dist < 400 && dist > 100 {
