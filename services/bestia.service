@@ -3,11 +3,11 @@ Description=Bestia Heart Beats
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/bestia
+ExecStart=/usr/local/bin/bestia -logLevel=info
 Restart=always
 RestartSec=30
-User=laertida
-Group=laertida
+User=mono
+Group=mono
 
 [Install]
 WantedBy=multi-user.target
