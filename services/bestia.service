@@ -3,7 +3,7 @@ Description=Bestia Heart Beats
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/bestia -logLevel=info
+ExecStart=/usr/local/bin/bestia -logLevel=info -lightsOn=true
 Restart=always
 RestartSec=30
 User=mono
