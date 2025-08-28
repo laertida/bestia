@@ -28,4 +28,13 @@ jobs:
         run: |
           go get .
       - name: Build
-        run: GOOS=linux GOARCH=arm GOARM=6 go build -v ./...
+        run: GOOS=linux GOARCH=arm GOARM=6 go build -v
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::524383445033:role/s3-lmnl-publisher-role
+          role-session-name: github-actions-role-ds
+          aws-region: us-east-2
+      - name: aws deploy
+        run: aws s3 copy ./bestia s3://lmnl.mx/bestia/bestia
