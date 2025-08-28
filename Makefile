@@ -8,10 +8,10 @@ build:
 	GOOS=linux GOARCH=arm GOARM=6 go build
 
 transfer: build
-	scp bestia ratito:/home/laertida/
+	scp bestia canon:/home/laertida/
 
 exec:
-	ssh -t laertida@ratito ./bestia
+	ssh -t laertida@canon ./bestia
 
 run: build transfer exec
 
