@@ -88,9 +88,9 @@ func main() {
 			var interval time.Duration
 			interval = 1 * time.Second
 
-			if dist > 400 || (dist < 90 && dist > 0) {
+			if dist > 400 || (dist < 99 && dist > 0) {
 				matrix.AllOff()
-				logger.Info("- off - Lights off due: [dist > 400 || (dist < 50 && dist > 0)]", "dist", dist)
+				logger.Info("- off - Lights off due: [dist > 400 || (dist < 99 && dist > 0)]", "dist", dist)
 
 			} else if dist < 400 && dist > 100 {
 				logger.Info("-normal- Ligths on normal pattern due: [dist < 400 && dist > 100]", "dist", dist)
