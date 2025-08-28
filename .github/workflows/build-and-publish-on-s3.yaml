@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         go-version: ["1.24.6"]
+        cache-dependency-path: subdir/go.sum
 
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +36,6 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::524383445033:role/s3-lmnl-publisher-role
           role-session-name: github-actions-role-ds
-          aws-region: us-east-2
+          aws-region: us-east-1
       - name: aws deploy
         run: aws s3 copy ./bestia s3://lmnl.mx/bestia/bestia
