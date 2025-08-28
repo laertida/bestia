@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"lmnl/bestia/helpers"
 	"lmnl/bestia/lights"
 	"lmnl/bestia/sensors"
+	"log/slog"
 	"os"
 	"periph.io/x/conn/v3/i2c/i2creg"
 	"periph.io/x/host/v3"
@@ -15,7 +17,7 @@ import (
 const (
 	TRIG_PORT = "23"
 	ECHO_PORT = "24"
-	LEFT_ADDR = 0x22
+	LEFT_ADDR = 0x23
 	RIGH_ADDR = 0x27
 	IODIR     = 0x00
 	GPIO      = 0x09
@@ -23,15 +25,21 @@ const (
 )
 
 func main() {
-
 	var timeLow = flag.Int("timeLow", 60, "time in milliseconds where trigger is low.")
-	var timeUp = flag.Int("timeUp", 10, "time in milliseconds where trigger is low.")
+	var timeUp = flag.Int("timeUp", 10, "time in microseconds where trigger is low.")
 	var timeOut = flag.Int("timeout", 1000, "time in milliseconds to consider timeout for the ultrasonic sensor.")
-	var lightsOn = flag.Bool("ligths", false, "This flags allows to configure if lights will be on or off.")
-	var log = flag.Bool("log", true, "This flag allows to enable, disable log.")
+	var lightsOn = flag.Bool("lightsOn", false, "This flags allows to configure if lights will be on or off.")
+	var logLevel = flag.String("logLevel", "error", "This flag determinates which is the log level, valid values are debug, info, warn and error ")
+	flag.Parse()
 
+	level := helpers.GetLogLevel(*logLevel)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
+	slog.SetDefault(logger)
+
+	slog.Info("Bestia started with this initial values", "timeLow", *timeLow, "timeUp", *timeUp, "timeout", *timeOut, "lightsOn", *lightsOn)
 	// L 0x40 0x20 0x10 0x08 0x04 0x02
 	// R 0x02 0x04 0x08 0x10 0x20 0x40
+
 	L_MAP := map[int]int{1: 0x40, 2: 0x20, 3: 0x10, 4: 0x08, 5: 0x04, 6: 0x02}
 	R_MAP := map[int]int{1: 0x02, 2: 0x04, 3: 0x08, 4: 0x10, 5: 0x20, 6: 0x40}
 
@@ -49,10 +57,10 @@ func main() {
 
 	defer bus.Close()
 
-	left := lights.NewLights("left side", LEFT_ADDR, L_MAP, bus)
-	right := lights.NewLights("right side", RIGH_ADDR, R_MAP, bus)
+	left := lights.NewLights("left side", LEFT_ADDR, L_MAP, bus, *logger)
+	right := lights.NewLights("right side", RIGH_ADDR, R_MAP, bus, *logger)
 	matrix := lights.NewMatrix(left, right)
-	ultra := sensors.NewUltra(TRIG_PORT, ECHO_PORT, *timeLow, *timeUp, *timeOut)
+	ultra := sensors.NewUltra(TRIG_PORT, ECHO_PORT, *timeLow, *timeUp, *timeOut, *logger)
 
 	var latestDist atomic.Value
 	// Goroutine to read distances periodically
@@ -60,7 +68,7 @@ func main() {
 		for {
 			dist := ultra.GetDistance()
 			latestDist.Store(dist)
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
@@ -74,21 +82,24 @@ func main() {
 
 			if !ok || dist < 0 {
 				matrix.AllOff()
+				logger.Error("Distance lecture is not ok or got timeout")
 				time.Sleep(step)
 			}
 			var interval time.Duration
 			interval = 1 * time.Second
-			if *log == true {
-				fmt.Printf("dist: %.2f\n", dist)
-			}
-			if dist > 400 || dist < 100 {
+
+			if dist > 400 || (dist < 90 && dist > 0) {
 				matrix.AllOff()
+				logger.Info("- off - Lights off due: [dist > 400 || (dist < 50 && dist > 0)]", "dist", dist)
+
 			} else if dist < 400 && dist > 100 {
+				logger.Info("-normal- Ligths on normal pattern due: [dist < 400 && dist > 100]", "dist", dist)
 				if *lightsOn == true {
 					matrix.RowStep()
 				}
 			} else {
 				interval = time.Duration(100 * time.Millisecond)
+				logger.Info("-random- Lights on due: dist in rage", "dist", dist)
 				if *lightsOn == true {
 					matrix.RowRandom()
 				}
@@ -102,7 +113,7 @@ func main() {
 				newDistVal := latestDist.Load()
 				newDist, ok := newDistVal.(float64)
 
-				if ok && (dist > 100 && newDist < 100) {
+				if ok && ((dist > 100.0 && newDist <= 100.0) || (dist <= 100.0 && newDist > 100.0) || (dist-newDist) > 10.0 || (newDist-dist) > 10.0) {
 					break
 				}
 			}

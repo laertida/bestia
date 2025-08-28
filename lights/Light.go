@@ -1,7 +1,7 @@
 package lights
 
 import (
-	"fmt"
+	"log/slog"
 	"math/rand"
 	"os"
 	"periph.io/x/conn/v3/i2c"
@@ -21,9 +21,10 @@ type Lights struct {
 	name   string
 	ports  map[int]int
 	on     int
+	logger slog.Logger
 }
 
-func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus) Lights {
+func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus, logger slog.Logger) Lights {
 
 	i2c := &i2c.Dev{Addr: addr, Bus: bus}
 	// Set all GPIO as outputs
@@ -31,14 +32,17 @@ func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus) Lights 
 	_, err = i2c.Write([]byte{GPIO, byte(INIT)})
 
 	if err != nil {
-		fmt.Println("failed to set IODIR: %v", err)
+		logger.Error("There was a problem trying to init I2C protocol")
 		os.Exit(1)
 	}
 
-	return Lights{addr: addr, i2c: i2c, lights: byte(0x00), name: name, ports: ports, on: 1}
+	NewLights := Lights{addr: addr, i2c: i2c, lights: byte(0x00), name: name, ports: ports, on: 1, logger: logger}
+	NewLights.Write() // off all lights on instanciation
+	return NewLights
 }
 
 func (lights *Lights) Write() {
+	lights.logger.Debug("Lighths on", "name", lights.name, "lights", byte(lights.lights))
 	lights.i2c.Write([]byte{GPIO, byte(lights.lights)})
 }
 
