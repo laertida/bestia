@@ -35,4 +35,4 @@ jobs:
           role-session-name: github-actions-role-ds
           aws-region: us-east-1
       - name: aws deploy
-        run: aws s3 copy ./bestia s3://lmnl.mx/bestia/bestia
+        run: aws s3 cp ./bestia s3://lmnl.mx/bestia/bestia
