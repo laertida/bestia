@@ -95,9 +95,11 @@ func main() {
 			}
 			var interval time.Duration
 			interval = 1 * time.Second
-
-			right.Step()
-
+			if test {
+				right.AllOn()
+			} else {
+				right.Step()
+			}
 			enlapsed := time.Duration(0)
 			for enlapsed < interval {
 				time.Sleep(step)
