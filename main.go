@@ -96,31 +96,9 @@ func main() {
 			var interval time.Duration
 			interval = 1 * time.Second
 
-			if dist > 400 || (dist < 99 && dist > 0) {
-				if test {
-					right.AllOn()
-					logger.Info("-  on  - Lights due test mode", "dist", dist)
-				} else {
-					right.AllOff()
-					logger.Info("- off - Lights off due: [dist > 400 || (dist < 99 && dist > 0)]", "dist", dist)
-				}
-			} else if dist < 400 && dist > 100 {
-
-				if *lightsOn == true {
-					right.Step()
-					logger.Info("-normal- Ligths on normal pattern due: [dist < 400 && dist > 100]", "dist", dist)
-				}
-			} else {
-				interval = time.Duration(100 * time.Millisecond)
-
-				if *lightsOn == true {
-					right.RandomOn()
-					logger.Info("-random- Lights on due: dist in rage", "dist", dist)
-				}
-			}
+			right.Step()
 
 			enlapsed := time.Duration(0)
-
 			for enlapsed < interval {
 				time.Sleep(step)
 				enlapsed += step
