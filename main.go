@@ -44,7 +44,6 @@ func main() {
 	// L 0x40 0x20 0x10 0x08 0x04 0x02
 	// R 0x02 0x04 0x08 0x10 0x20 0x40
 
-	L_MAP := map[int]int{1: 0x40, 2: 0x20, 3: 0x10, 4: 0x08, 5: 0x04, 6: 0x02}
 	R_MAP := map[int]int{1: 0x02, 2: 0x04, 3: 0x08, 4: 0x10, 5: 0x20, 6: 0x40}
 
 	// Initialize periph.io
@@ -61,9 +60,8 @@ func main() {
 
 	defer bus.Close()
 
-	left := lights.NewLights("left side", LEFT_ADDR, L_MAP, bus, *logger)
 	right := lights.NewLights("right side", RIGH_ADDR, R_MAP, bus, *logger)
-	matrix := lights.NewMatrix(left, right)
+
 	ultra := sensors.NewUltra(TRIG_PORT, ECHO_PORT, *timeLow, *timeUp, *timeOut, *logger)
 
 	testMode := gpioreg.ByName("17")
@@ -91,7 +89,7 @@ func main() {
 			dist, ok := distVal.(float64)
 
 			if !ok || dist < 0 {
-				matrix.AllOff()
+				right.AllOff()
 				logger.Error("Distance lecture is not ok or got timeout")
 				time.Sleep(step)
 			}
@@ -100,23 +98,23 @@ func main() {
 
 			if dist > 400 || (dist < 99 && dist > 0) {
 				if test {
-					matrix.AllOn()
+					right.AllOn()
 					logger.Info("-  on  - Lights due test mode", "dist", dist)
 				} else {
-					matrix.AllOff()
+					right.AllOff()
 					logger.Info("- off - Lights off due: [dist > 400 || (dist < 99 && dist > 0)]", "dist", dist)
 				}
 			} else if dist < 400 && dist > 100 {
 
 				if *lightsOn == true {
-					matrix.RowStep()
+					right.Step()
 					logger.Info("-normal- Ligths on normal pattern due: [dist < 400 && dist > 100]", "dist", dist)
 				}
 			} else {
 				interval = time.Duration(100 * time.Millisecond)
 
 				if *lightsOn == true {
-					matrix.RowRandom()
+					right.RandomOn()
 					logger.Info("-random- Lights on due: dist in rage", "dist", dist)
 				}
 			}
