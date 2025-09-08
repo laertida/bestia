@@ -3,7 +3,7 @@ Description=Bestia Heart Beats
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/bestia -logLevel=info -lightsOn=true
+ExecStart=/usr/local/bin/bestia -logLevel=info -mqttBroker=tcp://api.lmnl.mx:1883
 Restart=always
 RestartSec=30
 User=mono
