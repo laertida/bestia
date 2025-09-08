@@ -100,21 +100,6 @@ func main() {
 	// Main goroutine: consume distance and do something
 	if test {
 		go func() {
-
-			for {
-
-				if test {
-					right.AllOn()
-				} else {
-					right.Step()
-				}
-				time.Sleep(1 * time.Second)
-			}
-
-		}()
-
-	} else {
-		go func() {
 			for msg := range messages {
 
 				message := clients.Message{}
@@ -163,6 +148,22 @@ func main() {
 				}
 			}
 		}()
+
+	} else {
+		go func() {
+
+			for {
+
+				if test {
+					right.AllOn()
+				} else {
+					right.Step()
+				}
+				time.Sleep(1 * time.Second)
+			}
+
+		}()
+
 	}
 
 	select {}
