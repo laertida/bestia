@@ -3,7 +3,7 @@ package lights
 import (
 	"log/slog"
 	"math/rand"
-	"os"
+	//"os"
 	"periph.io/x/conn/v3/i2c"
 	"time"
 )
@@ -33,7 +33,7 @@ func NewLights(name string, addr uint16, ports map[int]int, bus i2c.Bus, logger 
 
 	if err != nil {
 		logger.Error("There was a problem trying to init I2C protocol")
-		os.Exit(1)
+		//os.Exit(1)
 	}
 
 	NewLights := Lights{addr: addr, i2c: i2c, lights: byte(0x00), name: name, ports: ports, on: 1, logger: logger}
